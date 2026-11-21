@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>待办清单</title>
+<style>
+    * { box-sizing: border-box; }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        padding: 60px 20px;
+        background: linear-gradient(135deg, #f7f3ff 0%, #eef4ff 100%);
+        font-family: -apple-system, "PingFang SC", sans-serif;
+        color: #232129;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+    }
+
+    .card {
+        width: min(560px, 100%);
+        background: white;
+        border-radius: 20px;
+        padding: 32px;
+        box-shadow: 0 20px 60px rgba(80, 60, 120, 0.12);
+    }
+
+    h1 { margin: 0 0 24px; color: #6a3fa8; font-size: 28px; }
+
+    .home {
+        display: inline-block;
+        margin-bottom: 12px;
+        color: #7b4bc4;
+        font-size: 14px;
+        text-decoration: none;
+    }
+
+    .home:hover { text-decoration: underline; }
+
+    .input-row { display: flex; gap: 10px; }
+
+    .input-row input {
+        flex: 1;
+        padding: 12px 16px;
+        border: 1px solid #ddd6e8;
+        border-radius: 10px;
+        font-size: 15px;
+        font-family: inherit;
+    }
+
+    .input-row input:focus {
+        outline: 2px solid #b79ada;
+        border-color: transparent;
+    }
+
+    button {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 10px;
+        background: #7b4bc4;
+        color: white;
+        font-size: 15px;
+        cursor: pointer;
+    }
+
+    button:hover { background: #6835ad; }
+
+    ul { list-style: none; padding: 0; margin: 24px 0 0; }
+
+    li {
+        padding: 14px 4px;
+        border-bottom: 1px solid #eeeaf3;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    li.done span {
+        text-decoration: line-through;
+        opacity: 0.45;
+    }
+
+    li span { flex: 1; }
+
+    input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #7b4bc4;
+    }
+
+    .delete {
+        margin-left: auto;
+        padding: 6px 12px;
+        background: #f3eef8;
+        color: #7b4bc4;
+        font-size: 13px;
+    }
+
+    .delete:hover { background: #e6d9f2; }
+
+    .hint { color: #8b8798; font-size: 13px; margin: 20px 0 0; }
+</style>
+</head>
+<body>
+<div class="card">
+    <a class="home" href="home.html">← 返回首页</a>
+    <h1>待办清单</h1>
+    <div class="input-row">
+        <input id="taskInput" placeholder="要做什么？">
+        <button id="addBtn">添加</button>
+    </div>
+    <ul id="taskList"></ul>
+    <p class="hint" id="hint"></p>
+</div>
+
+<script>
+    const input = document.querySelector("#taskInput");
+    const addBtn = document.querySelector("#addBtn");
+    const list = document.querySelector("#taskList");
+    const hint = document.querySelector("#hint");
+
+    const STORAGE_KEY = "vibe-todo-tasks";
+
+    function loadTasks() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved === null) return [];
+        return JSON.parse(saved);
+    }
+
+    function saveTasks() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    }
+
+    let tasks = loadTasks();
+
+    function render() {
+        list.innerHTML = "";
+
+        for (const task of tasks) {
+            const li = document.createElement("li");
+            if (task.done) li.className = "done";
+
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.checked = task.done;
+            checkbox.addEventListener("change", function () {
+                task.done = checkbox.checked;
+                saveTasks();
+                render();
+            });
+
+            const text = document.createElement("span");
+            text.textContent = task.text;
+
+            const del = document.createElement("button");
+            del.textContent = "删除";
+            del.className = "delete";
+            del.addEventListener("click", function () {
+                tasks = tasks.filter(t => t !== task);
+                saveTasks();
+                render();
+            });
+
+            li.append(checkbox, text, del);
+            list.appendChild(li);
+        }
+
+        const remaining = tasks.filter(t => !t.done).length;
+        hint.textContent = tasks.length === 0
+            ? "还没有任务，添加一个吧"
+            : `共 ${tasks.length} 项，还剩 ${remaining} 项未完成`;
+    }
+
+    function addTask() {
+        const text = input.value.trim();
+        if (text === "") return;
+
+        tasks.push({ text: text, done: false });
+        input.value = "";
+        saveTasks();
+        render();
+    }
+
+    addBtn.addEventListener("click", addTask);
+
+    input.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") addTask();
+    });
+
+    render();
+</script>
+</body>
+</html>
