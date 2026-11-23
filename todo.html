@@ -80,14 +80,14 @@
 
     .filters { display: flex; gap: 8px; margin-top: 18px; }
 
-    .filter, .clear {
+    .filter, .clear, .export {
         padding: 8px 14px;
         background: #f3eef8;
         color: #7b4bc4;
         font-size: 13px;
     }
 
-    .filter:hover, .clear:hover { background: #e6d9f2; }
+    .filter:hover, .clear:hover, .export:hover { background: #e6d9f2; }
 
     .filter.active {
         background: #7b4bc4;
@@ -146,6 +146,8 @@
     }
 
     .hint { color: #8b8798; font-size: 13px; margin: 0; }
+
+    .actions { display: flex; gap: 8px; }
 </style>
 </head>
 <body>
@@ -172,7 +174,10 @@
 
     <div class="footer">
         <p class="hint" id="hint"></p>
-        <button id="clearDone" class="clear">清除已完成</button>
+        <div class="actions">
+            <button id="exportBtn" class="export">导出</button>
+            <button id="clearDone" class="clear">清除已完成</button>
+        </div>
     </div>
 </div>
 
@@ -184,6 +189,7 @@
     const hint = document.querySelector("#hint");
     const filterBtns = document.querySelectorAll(".filter");
     const clearBtn = document.querySelector("#clearDone");
+    const exportBtn = document.querySelector("#exportBtn");
 
     const STORAGE_KEY = "vibe-todo-tasks";
     const PRIORITY_LABEL = { high: "高", medium: "中", low: "低" };
@@ -297,6 +303,31 @@
         saveTasks();
         render();
     });
+
+    function exportTasks() {
+        if (tasks.length === 0) {
+            alert("还没有任务可以导出");
+            return;
+        }
+
+        // 把任务数据变成格式化的 JSON 文本
+        const json = JSON.stringify(tasks, null, 2);
+        // 造一个"文件"对象，类型是 JSON
+        const blob = new Blob([json], { type: "application/json" });
+        // 给这个 blob 造一个临时网址
+        const url = URL.createObjectURL(blob);
+
+        // 用隐藏的 <a> 触发下载
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "我的任务.json";
+        a.click();
+
+        // 释放临时网址
+        URL.revokeObjectURL(url);
+    }
+
+    exportBtn.addEventListener("click", exportTasks);
 
     render();
 </script>
