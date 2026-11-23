@@ -20,7 +20,7 @@
     }
 
     .card {
-        width: min(560px, 100%);
+        width: min(600px, 100%);
         background: white;
         border-radius: 20px;
         padding: 32px;
@@ -43,11 +43,22 @@
 
     .input-row input {
         flex: 1;
+        min-width: 0;
         padding: 12px 16px;
         border: 1px solid #ddd6e8;
         border-radius: 10px;
         font-size: 15px;
         font-family: inherit;
+    }
+
+    .input-row select {
+        padding: 12px 10px;
+        border: 1px solid #ddd6e8;
+        border-radius: 10px;
+        font-size: 14px;
+        font-family: inherit;
+        background: white;
+        cursor: pointer;
     }
 
     .input-row input:focus {
@@ -67,7 +78,23 @@
 
     button:hover { background: #6835ad; }
 
-    ul { list-style: none; padding: 0; margin: 24px 0 0; }
+    .filters { display: flex; gap: 8px; margin-top: 18px; }
+
+    .filter, .clear {
+        padding: 8px 14px;
+        background: #f3eef8;
+        color: #7b4bc4;
+        font-size: 13px;
+    }
+
+    .filter:hover, .clear:hover { background: #e6d9f2; }
+
+    .filter.active {
+        background: #7b4bc4;
+        color: white;
+    }
+
+    ul { list-style: none; padding: 0; margin: 20px 0 0; }
 
     li {
         padding: 14px 4px;
@@ -77,12 +104,24 @@
         gap: 12px;
     }
 
-    li.done span {
+    li.done .text {
         text-decoration: line-through;
         opacity: 0.45;
     }
 
-    li span { flex: 1; }
+    .text { flex: 1; min-width: 0; }
+
+    .priority {
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    .priority.high { background: #ffe8e8; color: #c0392b; }
+    .priority.medium { background: #fff2dc; color: #b9770e; }
+    .priority.low { background: #e6f4ea; color: #2e7d32; }
 
     input[type="checkbox"] {
         width: 18px;
@@ -92,16 +131,21 @@
     }
 
     .delete {
-        margin-left: auto;
         padding: 6px 12px;
         background: #f3eef8;
         color: #7b4bc4;
         font-size: 13px;
     }
 
-    .delete:hover { background: #e6d9f2; }
+    .footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-top: 20px;
+    }
 
-    .hint { color: #8b8798; font-size: 13px; margin: 20px 0 0; }
+    .hint { color: #8b8798; font-size: 13px; margin: 0; }
 </style>
 </head>
 <body>
@@ -110,24 +154,51 @@
     <h1>待办清单</h1>
     <div class="input-row">
         <input id="taskInput" placeholder="要做什么？">
+        <select id="prioritySelect">
+            <option value="medium">中</option>
+            <option value="high">高</option>
+            <option value="low">低</option>
+        </select>
         <button id="addBtn">添加</button>
     </div>
+
+    <div class="filters">
+        <button class="filter active" data-filter="all">全部</button>
+        <button class="filter" data-filter="active">未完成</button>
+        <button class="filter" data-filter="done">已完成</button>
+    </div>
+
     <ul id="taskList"></ul>
-    <p class="hint" id="hint"></p>
+
+    <div class="footer">
+        <p class="hint" id="hint"></p>
+        <button id="clearDone" class="clear">清除已完成</button>
+    </div>
 </div>
 
 <script>
     const input = document.querySelector("#taskInput");
+    const prioritySelect = document.querySelector("#prioritySelect");
     const addBtn = document.querySelector("#addBtn");
     const list = document.querySelector("#taskList");
     const hint = document.querySelector("#hint");
+    const filterBtns = document.querySelectorAll(".filter");
+    const clearBtn = document.querySelector("#clearDone");
 
     const STORAGE_KEY = "vibe-todo-tasks";
+    const PRIORITY_LABEL = { high: "高", medium: "中", low: "低" };
+
+    let currentFilter = "all";
 
     function loadTasks() {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved === null) return [];
-        return JSON.parse(saved);
+        const data = JSON.parse(saved);
+        // 兼容旧数据：以前的任务没有优先级，默认补"中"
+        for (const task of data) {
+            if (task.priority === undefined) task.priority = "medium";
+        }
+        return data;
     }
 
     function saveTasks() {
@@ -136,10 +207,18 @@
 
     let tasks = loadTasks();
 
+    function visibleTasks() {
+        if (currentFilter === "active") return tasks.filter(t => !t.done);
+        if (currentFilter === "done") return tasks.filter(t => t.done);
+        return tasks;
+    }
+
     function render() {
         list.innerHTML = "";
 
-        for (const task of tasks) {
+        const shown = visibleTasks();
+
+        for (const task of shown) {
             const li = document.createElement("li");
             if (task.done) li.className = "done";
 
@@ -153,7 +232,12 @@
             });
 
             const text = document.createElement("span");
+            text.className = "text";
             text.textContent = task.text;
+
+            const tag = document.createElement("span");
+            tag.className = "priority " + task.priority;
+            tag.textContent = PRIORITY_LABEL[task.priority] || "中";
 
             const del = document.createElement("button");
             del.textContent = "删除";
@@ -164,21 +248,26 @@
                 render();
             });
 
-            li.append(checkbox, text, del);
+            li.append(checkbox, text, tag, del);
             list.appendChild(li);
         }
 
         const remaining = tasks.filter(t => !t.done).length;
+        const done = tasks.filter(t => t.done).length;
         hint.textContent = tasks.length === 0
             ? "还没有任务，添加一个吧"
-            : `共 ${tasks.length} 项，还剩 ${remaining} 项未完成`;
+            : `共 ${tasks.length} 项 · 未完成 ${remaining} · 已完成 ${done}`;
     }
 
     function addTask() {
         const text = input.value.trim();
         if (text === "") return;
 
-        tasks.push({ text: text, done: false });
+        tasks.push({
+            text: text,
+            done: false,
+            priority: prioritySelect.value
+        });
         input.value = "";
         saveTasks();
         render();
@@ -188,6 +277,25 @@
 
     input.addEventListener("keydown", function (event) {
         if (event.key === "Enter") addTask();
+    });
+
+    for (const btn of filterBtns) {
+        btn.addEventListener("click", function () {
+            currentFilter = btn.dataset.filter;
+            for (const b of filterBtns) {
+                b.classList.toggle("active", b === btn);
+            }
+            render();
+        });
+    }
+
+    clearBtn.addEventListener("click", function () {
+        const count = tasks.filter(t => t.done).length;
+        if (count === 0) return;
+        if (!confirm(`确定清除 ${count} 项已完成任务吗？`)) return;
+        tasks = tasks.filter(t => !t.done);
+        saveTasks();
+        render();
     });
 
     render();
