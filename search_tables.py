@@ -36,14 +36,79 @@ th { color: #6b6875; width: 30%; }
     text-align: center;
     color: #8b8798;
 }
-.hidden-group { margin-top: 28px; }
-.hidden-group summary {
-    cursor: pointer;
-    color: #6a3fa8;
-    font-size: 14px;
-    padding: 10px 0;
+.columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
 }
-.hidden-group summary:hover { color: #7b4bc4; }
+.column h2 {
+    margin: 0 0 16px;
+    font-size: 17px;
+    color: #6a3fa8;
+}
+.column.hidden-column h2 { color: #8b6bb5; }
+.no-match { color: #8b8798; font-size: 13px; padding: 20px 0; }
+@media (max-width: 820px) {
+    .columns { grid-template-columns: 1fr; }
+}
+.pager {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-top: 20px;
+}
+.pager button {
+    padding: 8px 16px;
+    background: #efe8fa;
+    color: #6a3fa8;
+    font-size: 13px;
+}
+.pager button:hover { background: #e6d9f2; }
+.pager button:disabled { opacity: 0.4; cursor: not-allowed; }
+.page-info { color: #8b8798; font-size: 13px; min-width: 80px; text-align: center; }
+"""
+
+JS = """
+const PAGE_SIZE = 10;
+
+function setupPager(group) {
+    const cards = group.querySelectorAll(".hit");
+    const pager = group.querySelector(".pager");
+
+    if (cards.length <= PAGE_SIZE) {
+        pager.remove();
+        return;
+    }
+
+    let page = 1;
+    const pages = Math.ceil(cards.length / PAGE_SIZE);
+    const info = pager.querySelector(".page-info");
+    const prev = pager.querySelector(".prev");
+    const next = pager.querySelector(".next");
+
+    function show() {
+        cards.forEach(function (card, i) {
+            const start = (page - 1) * PAGE_SIZE;
+            card.style.display = (i >= start && i < start + PAGE_SIZE) ? "" : "none";
+        });
+        info.textContent = "第 " + page + " / " + pages + " 页";
+        prev.disabled = page === 1;
+        next.disabled = page === pages;
+    }
+
+    prev.addEventListener("click", function () {
+        if (page > 1) { page--; show(); }
+    });
+    next.addEventListener("click", function () {
+        if (page < pages) { page++; show(); }
+    });
+
+    show();
+}
+
+document.querySelectorAll(".result-group").forEach(setupPager);
 """
 
 
@@ -152,22 +217,39 @@ def make_card(hit, keyword):
 
 def build_html(hits, keyword, folder):
     """数据 + 模板 → 搜索报告"""
+    pager_html = (
+        "<div class='pager'>"
+        "<button class='prev'>← 上一页</button>"
+        "<span class='page-info'></span>"
+        "<button class='next'>下一页 →</button>"
+        "</div>"
+    )
+
+    def make_column(title, group_hits, is_hidden):
+        """把一组结果渲染成一栏（带标题和独立分页）"""
+        if group_hits:
+            cards = "".join(make_card(hit, keyword) for hit in group_hits)
+            content = "<div class='result-group'>" + cards + pager_html + "</div>"
+        else:
+            content = "<p class='no-match'>这一组没有匹配结果</p>"
+
+        cls = "column hidden-column" if is_hidden else "column"
+        return (
+            f"<div class='{cls}'>"
+            f"<h2>{title} · {len(group_hits)} 条</h2>"
+            + content
+            + "</div>"
+        )
+
     if hits:
         visible = [hit for hit in hits if not hit["hidden"]]
         hidden = [hit for hit in hits if hit["hidden"]]
 
-        cards = "".join(make_card(hit, keyword) for hit in visible)
-
-        if hidden:
-            hidden_cards = "".join(make_card(hit, keyword) for hit in hidden)
-            cards += (
-                "<details class='hidden-group'>"
-                f"<summary>🙈 隐藏工作表 · {len(hidden)} 条（点击展开）</summary>"
-                + hidden_cards
-                + "</details>"
-            )
-
-        body = cards
+        columns = (
+            make_column("📄 正常工作表", visible, False)
+            + make_column("🙈 隐藏工作表", hidden, True)
+        )
+        body = "<div class='columns'>" + columns + "</div>"
     else:
         body = f"<div class='empty'>没有找到包含 “{escape(keyword)}” 的内容</div>"
 
@@ -187,6 +269,7 @@ def build_html(hits, keyword, folder):
 <p class="info">关键词：{escape(keyword)} · 共 {len(hits)} 条（正常 {visible_count} · 隐藏 {hidden_count}） · 文件夹：{escape(str(folder))}</p>
 {body}
 </div>
+<script>{JS}</script>
 </body>
 </html>
 """
