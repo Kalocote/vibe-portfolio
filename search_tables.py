@@ -36,22 +36,23 @@ th { color: #6b6875; width: 30%; }
     text-align: center;
     color: #8b8798;
 }
-.columns {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-    align-items: start;
+.jump {
+    display: flex;
+    gap: 12px;
+    margin: 0 0 28px;
 }
-.column h2 {
-    margin: 0 0 16px;
-    font-size: 17px;
+.jump a {
+    padding: 10px 18px;
+    background: white;
     color: #6a3fa8;
+    border-radius: 999px;
+    font-size: 14px;
+    text-decoration: none;
+    box-shadow: 0 4px 20px rgba(80, 60, 120, 0.06);
 }
-.column.hidden-column h2 { color: #8b6bb5; }
-.no-match { color: #8b8798; font-size: 13px; padding: 20px 0; }
-@media (max-width: 820px) {
-    .columns { grid-template-columns: 1fr; }
-}
+.jump a:hover { background: #efe8fa; }
+.jump a.current { background: #7b4bc4; color: white; }
+.no-match { color: #8b8798; font-size: 14px; padding: 20px 0; }
 .pager {
     display: flex;
     justify-content: center;
@@ -215,8 +216,13 @@ def make_card(hit, keyword):
     )
 
 
-def build_html(hits, keyword, folder):
-    """数据 + 模板 → 搜索报告"""
+def build_html(hits, keyword, folder, current):
+    """生成单个结果页：current 是 "normal" 或 "hidden" """
+    visible = [hit for hit in hits if not hit["hidden"]]
+    hidden = [hit for hit in hits if hit["hidden"]]
+    group = visible if current == "normal" else hidden
+    title = "表格搜索结果 · 正常工作表" if current == "normal" else "表格搜索结果 · 隐藏工作表"
+
     pager_html = (
         "<div class='pager'>"
         "<button class='prev'>← 上一页</button>"
@@ -225,48 +231,33 @@ def build_html(hits, keyword, folder):
         "</div>"
     )
 
-    def make_column(title, group_hits, is_hidden):
-        """把一组结果渲染成一栏（带标题和独立分页）"""
-        if group_hits:
-            cards = "".join(make_card(hit, keyword) for hit in group_hits)
-            content = "<div class='result-group'>" + cards + pager_html + "</div>"
-        else:
-            content = "<p class='no-match'>这一组没有匹配结果</p>"
-
-        cls = "column hidden-column" if is_hidden else "column"
-        return (
-            f"<div class='{cls}'>"
-            f"<h2>{title} · {len(group_hits)} 条</h2>"
-            + content
-            + "</div>"
-        )
-
-    if hits:
-        visible = [hit for hit in hits if not hit["hidden"]]
-        hidden = [hit for hit in hits if hit["hidden"]]
-
-        columns = (
-            make_column("📄 正常工作表", visible, False)
-            + make_column("🙈 隐藏工作表", hidden, True)
-        )
-        body = "<div class='columns'>" + columns + "</div>"
+    if group:
+        cards = "".join(make_card(hit, keyword) for hit in group)
+        body = "<div class='result-group'>" + cards + pager_html + "</div>"
     else:
-        body = f"<div class='empty'>没有找到包含 “{escape(keyword)}” 的内容</div>"
+        body = f"<div class='empty'>这一组没有找到包含 “{escape(keyword)}” 的内容</div>"
 
-    visible_count = sum(1 for hit in hits if not hit["hidden"])
-    hidden_count = sum(1 for hit in hits if hit["hidden"])
+    normal_cls = "current" if current == "normal" else ""
+    hidden_cls = "current" if current == "hidden" else ""
+    jump = (
+        "<nav class='jump'>"
+        f"<a class='{normal_cls}' href='搜索结果.html'>📄 正常工作表 · {len(visible)} 条</a>"
+        f"<a class='{hidden_cls}' href='隐藏结果.html'>🙈 隐藏工作表 · {len(hidden)} 条</a>"
+        "</nav>"
+    )
 
     html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>表格搜索结果</title>
+<title>{title}</title>
 <style>{CSS}</style>
 </head>
 <body>
 <div class="wrap">
-<h1>表格搜索结果</h1>
-<p class="info">关键词：{escape(keyword)} · 共 {len(hits)} 条（正常 {visible_count} · 隐藏 {hidden_count}） · 文件夹：{escape(str(folder))}</p>
+<h1>{title}</h1>
+<p class="info">关键词：{escape(keyword)} · {len(group)} 条 · 文件夹：{escape(str(folder))}</p>
+{jump}
 {body}
 </div>
 <script>{JS}</script>
@@ -292,11 +283,13 @@ if __name__ == "__main__":
         sys.exit(1)
 
     hits = scan(folder, keyword)
-    report = folder / "搜索结果.html"
-    report.write_text(build_html(hits, keyword, folder), encoding="utf-8")
-
     visible = [hit for hit in hits if not hit["hidden"]]
     hidden = [hit for hit in hits if hit["hidden"]]
+
+    normal_report = folder / "搜索结果.html"
+    hidden_report = folder / "隐藏结果.html"
+    normal_report.write_text(build_html(hits, keyword, folder, "normal"), encoding="utf-8")
+    hidden_report.write_text(build_html(hits, keyword, folder, "hidden"), encoding="utf-8")
 
     print(f"关键词: {keyword} · 找到 {len(hits)} 条（正常 {len(visible)} · 隐藏 {len(hidden)}）")
     for hit in visible:
@@ -305,4 +298,5 @@ if __name__ == "__main__":
         print("  🙈 隐藏工作表：")
         for hit in hidden:
             print(f"     {hit['file']} / {hit['sheet']} / 第 {hit['row']} 行")
-    print("已生成报告:", report)
+    print("已生成报告:", normal_report)
+    print("           ", hidden_report)
