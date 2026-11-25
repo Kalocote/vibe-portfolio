@@ -57,53 +57,159 @@ th { color: #6b6875; width: 30%; }
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 16px;
-    margin-top: 20px;
+    gap: 8px;
+    margin-top: 28px;
+    flex-wrap: wrap;
 }
 .pager button {
-    padding: 8px 16px;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 10px;
+    background: #efe8fa;
+    color: #6a3fa8;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+}
+.pager button:hover:not(:disabled):not(.active) {
+    background: #e2d3f3;
+    transform: translateY(-1px);
+}
+.pager button:disabled { opacity: 0.35; cursor: not-allowed; }
+.pager button.active { background: #7b4bc4; color: #fff; }
+.pager .arrow { font-size: 20px; line-height: 1; padding: 0 14px; }
+.page-numbers { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.page-numbers .dots {
+    min-width: 24px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a99fb8;
+    font-size: 14px;
+}
+.jump-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    color: #8b8798;
+    font-size: 13px;
+}
+.jump-page input {
+    width: 52px;
+    height: 34px;
+    text-align: center;
+    border: 1px solid #ddd5e8;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #6a3fa8;
+    background: white;
+}
+.jump-page input:focus { outline: 2px solid #c9aee8; outline-offset: 1px; }
+.jump-page button {
+    height: 34px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 8px;
     background: #efe8fa;
     color: #6a3fa8;
     font-size: 13px;
+    cursor: pointer;
 }
-.pager button:hover { background: #e6d9f2; }
-.pager button:disabled { opacity: 0.4; cursor: not-allowed; }
-.page-info { color: #8b8798; font-size: 13px; min-width: 80px; text-align: center; }
+.jump-page button:hover { background: #e2d3f3; }
 """
 
 JS = """
 const PAGE_SIZE = 10;
 
+// 生成要显示的页码：页数少就全显示，多则只显示当前页附近 5 个 + 首尾
+function pageList(current, pages) {
+    if (pages <= 7) {
+        const all = [];
+        for (let n = 1; n <= pages; n++) all.push(n);
+        return all;
+    }
+
+    let start = current - 2;
+    let end = current + 2;
+    if (start < 1) { end += 1 - start; start = 1; }
+    if (end > pages) { start -= end - pages; end = pages; }
+
+    const items = [];
+    if (start > 1) {
+        items.push(1);
+        if (start > 2) items.push("…");
+    }
+    for (let n = start; n <= end; n++) items.push(n);
+    if (end < pages) {
+        if (end < pages - 1) items.push("…");
+        items.push(pages);
+    }
+    return items;
+}
+
 function setupPager(group) {
     const cards = group.querySelectorAll(".hit");
     const pager = group.querySelector(".pager");
+    const jump = group.querySelector(".jump-page");
 
     if (cards.length <= PAGE_SIZE) {
         pager.remove();
+        jump.remove();
         return;
     }
 
     let page = 1;
     const pages = Math.ceil(cards.length / PAGE_SIZE);
-    const info = pager.querySelector(".page-info");
+    const numbers = pager.querySelector(".page-numbers");
     const prev = pager.querySelector(".prev");
     const next = pager.querySelector(".next");
+    const input = jump.querySelector(".page-input");
+    const go = jump.querySelector(".go");
+
+    function goTo(target) {
+        if (!Number.isInteger(target) || target < 1 || target > pages) return;
+        page = target;
+        show();
+    }
 
     function show() {
         cards.forEach(function (card, i) {
             const start = (page - 1) * PAGE_SIZE;
             card.style.display = (i >= start && i < start + PAGE_SIZE) ? "" : "none";
         });
-        info.textContent = "第 " + page + " / " + pages + " 页";
+
+        numbers.innerHTML = "";
+        for (const item of pageList(page, pages)) {
+            if (item === "…") {
+                const dots = document.createElement("span");
+                dots.className = "dots";
+                dots.textContent = "…";
+                numbers.appendChild(dots);
+                continue;
+            }
+            const btn = document.createElement("button");
+            btn.textContent = item;
+            if (item === page) btn.className = "active";
+            btn.addEventListener("click", function () { goTo(item); });
+            numbers.appendChild(btn);
+        }
+
         prev.disabled = page === 1;
         next.disabled = page === pages;
+        input.max = pages;
+        input.value = page;
     }
 
-    prev.addEventListener("click", function () {
-        if (page > 1) { page--; show(); }
-    });
-    next.addEventListener("click", function () {
-        if (page < pages) { page++; show(); }
+    prev.addEventListener("click", function () { goTo(page - 1); });
+    next.addEventListener("click", function () { goTo(page + 1); });
+    go.addEventListener("click", function () { goTo(parseInt(input.value, 10)); });
+    input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") goTo(parseInt(input.value, 10));
     });
 
     show();
@@ -225,9 +331,13 @@ def build_html(hits, keyword, folder, current):
 
     pager_html = (
         "<div class='pager'>"
-        "<button class='prev'>← 上一页</button>"
-        "<span class='page-info'></span>"
-        "<button class='next'>下一页 →</button>"
+        "<button class='arrow prev'>‹</button>"
+        "<span class='page-numbers'></span>"
+        "<button class='arrow next'>›</button>"
+        "</div>"
+        "<div class='jump-page'>"
+        f"共 {len(group)} 条 · 跳至 <input type='number' class='page-input' min='1' /> 页"
+        "<button class='go'>跳转</button>"
         "</div>"
     )
 
