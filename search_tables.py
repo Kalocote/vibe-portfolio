@@ -36,10 +36,18 @@ th { color: #6b6875; width: 30%; }
     text-align: center;
     color: #8b8798;
 }
+.hidden-group { margin-top: 28px; }
+.hidden-group summary {
+    cursor: pointer;
+    color: #6a3fa8;
+    font-size: 14px;
+    padding: 10px 0;
+}
+.hidden-group summary:hover { color: #7b4bc4; }
 """
 
 
-def make_hit(file, sheet, row_no, header, values, keyword):
+def make_hit(file, sheet, row_no, header, values, keyword, hidden):
     """把一条匹配记录整理成统一格式"""
     pairs = []
     for key, value in zip(header, values):
@@ -50,6 +58,7 @@ def make_hit(file, sheet, row_no, header, values, keyword):
         "file": file,
         "sheet": sheet,
         "row": row_no,
+        "hidden": hidden,
         "pairs": pairs,
     }
 
@@ -66,9 +75,10 @@ def search_xlsx(path, keyword):
             continue
         header = rows[0]
 
+        hidden = ws.sheet_state != "visible"
         for i, values in enumerate(rows[1:], start=2):
             if any(kw in str(v).lower() for v in values if v is not None):
-                hits.append(make_hit(path.name, ws.title, i, header, values, keyword))
+                hits.append(make_hit(path.name, ws.title, i, header, values, keyword, hidden))
 
     wb.close()
     return hits
@@ -88,7 +98,7 @@ def search_csv(path, keyword):
 
     for i, values in enumerate(rows[1:], start=2):
         if any(kw in v.lower() for v in values):
-            hits.append(make_hit(path.name, "单表", i, header, values, keyword))
+            hits.append(make_hit(path.name, "单表", i, header, values, keyword, False))
 
     return hits
 
@@ -120,30 +130,49 @@ def highlight(text, keyword):
     return f"{before}<mark>{matched}</mark>{after}"
 
 
+def make_card(hit, keyword):
+    """把一条命中渲染成一张卡片"""
+    rows = ""
+    for key, value in hit["pairs"]:
+        rows += (
+            "<tr>"
+            f"<th>{escape(key)}</th>"
+            f"<td>{highlight(value, keyword)}</td>"
+            "</tr>"
+        )
+    return (
+        "<div class='hit'>"
+        "<p class='where'>📄 <strong>"
+        f"{escape(hit['file'])}</strong> · 工作表：{escape(hit['sheet'])} · 第 {hit['row']} 行"
+        "</p>"
+        "<table>" + rows + "</table>"
+        "</div>"
+    )
+
+
 def build_html(hits, keyword, folder):
     """数据 + 模板 → 搜索报告"""
     if hits:
-        cards = ""
-        for hit in hits:
-            rows = ""
-            for key, value in hit["pairs"]:
-                rows += (
-                    "<tr>"
-                    f"<th>{escape(key)}</th>"
-                    f"<td>{highlight(value, keyword)}</td>"
-                    "</tr>"
-                )
+        visible = [hit for hit in hits if not hit["hidden"]]
+        hidden = [hit for hit in hits if hit["hidden"]]
+
+        cards = "".join(make_card(hit, keyword) for hit in visible)
+
+        if hidden:
+            hidden_cards = "".join(make_card(hit, keyword) for hit in hidden)
             cards += (
-                "<div class='hit'>"
-                "<p class='where'>📄 <strong>"
-                f"{escape(hit['file'])}</strong> · 工作表：{escape(hit['sheet'])} · 第 {hit['row']} 行"
-                "</p>"
-                "<table>" + rows + "</table>"
-                "</div>"
+                "<details class='hidden-group'>"
+                f"<summary>🙈 隐藏工作表 · {len(hidden)} 条（点击展开）</summary>"
+                + hidden_cards
+                + "</details>"
             )
+
         body = cards
     else:
         body = f"<div class='empty'>没有找到包含 “{escape(keyword)}” 的内容</div>"
+
+    visible_count = sum(1 for hit in hits if not hit["hidden"])
+    hidden_count = sum(1 for hit in hits if hit["hidden"])
 
     html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
@@ -155,7 +184,7 @@ def build_html(hits, keyword, folder):
 <body>
 <div class="wrap">
 <h1>表格搜索结果</h1>
-<p class="info">关键词：{escape(keyword)} · 找到 {len(hits)} 条 · 文件夹：{escape(str(folder))}</p>
+<p class="info">关键词：{escape(keyword)} · 共 {len(hits)} 条（正常 {visible_count} · 隐藏 {hidden_count}） · 文件夹：{escape(str(folder))}</p>
 {body}
 </div>
 </body>
@@ -183,7 +212,14 @@ if __name__ == "__main__":
     report = folder / "搜索结果.html"
     report.write_text(build_html(hits, keyword, folder), encoding="utf-8")
 
-    print(f"关键词: {keyword} · 找到 {len(hits)} 条")
-    for hit in hits:
+    visible = [hit for hit in hits if not hit["hidden"]]
+    hidden = [hit for hit in hits if hit["hidden"]]
+
+    print(f"关键词: {keyword} · 找到 {len(hits)} 条（正常 {len(visible)} · 隐藏 {len(hidden)}）")
+    for hit in visible:
         print(f"  📄 {hit['file']} / {hit['sheet']} / 第 {hit['row']} 行")
+    if hidden:
+        print("  🙈 隐藏工作表：")
+        for hit in hidden:
+            print(f"     {hit['file']} / {hit['sheet']} / 第 {hit['row']} 行")
     print("已生成报告:", report)
