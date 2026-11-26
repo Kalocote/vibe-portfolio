@@ -1,147 +1,64 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的第一个网页</title>
-    <style>
-        * { box-sizing: border-box; }
-
-        body {
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: -apple-system, "PingFang SC", sans-serif;
-            background: linear-gradient(135deg, #fdf6ff 0%, #eef2ff 100%);
-            color: #232129;
-        }
-
-        .card {
-            width: min(640px, 90vw);
-            background: white;
-            border-radius: 4px;
-            padding: 24px;
-            box-shadow: 0 20px 60px rgba(80, 60, 120, 0.12);
-        }
-
-        h1 {
-            margin: 0 0 8px;
-            font-size: 42px;
-            background: linear-gradient(90deg, #7b4bc4, #d16ba5);
-            -webkit-background-clip: text;
-            color: transparent;
-        }
-
-        .subtitle {
-            margin: 0 0 32px;
-            color: #6b6875;
-            font-size: 16px;
-        }
-
-        .home {
-            color: #7b4bc4;
-            font-size: 14px;
-            text-decoration: none;
-        }
-
-        .home:hover { text-decoration: underline; }
-
-        .item {
-            display: flex;
-            gap: 16px;
-            align-items: flex-start;
-            padding: 18px 0;
-            border-top: 1px solid #eeeaf3;
-        }
-
-        .icon { font-size: 28px; }
-
-        .item h2 {
-            margin: 0 0 4px;
-            font-size: 17px;
-        }
-
-        .item p {
-            margin: 0;
-            color: #6b6875;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        button {
-            margin-top: 28px;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 999px;
-            background: #0f8b8d;
-            color: white;
-            font-size: 15px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(123, 75, 196, 0.3);
-        }
-
-        body.dark {
-            background: linear-gradient(135deg, #15151c 0%, #2b2440 100%);
-            color: #f2f2f5;
-        }
-
-        body.dark .card {
-            background: #262633;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
-        }
-
-        body.dark .subtitle,
-        body.dark .item p { color: #b8b5c4; }
-
-        body.dark .item { border-top-color: #3d3d4d; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的第一个网页</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="card">
-        <h1>你好，世界</h1>
-        <p class="subtitle">这是我的第一个网页 · 2026年11月</p>
-        <a class="home" href="home.html">← 返回首页</a>
 
-        <div class="item">
-            <div class="icon">🎲</div>
-            <div>
-                <h2>猜数字游戏</h2>
-                <p>Python 写的第一个完整程序：随机数、循环、判断、输入容错。</p>
-            </div>
-        </div>
-
-        <div class="item">
-            <div class="icon">🗂️</div>
-            <div>
-                <h2>下载文件夹整理脚本</h2>
-                <p>每月 1 号和 16 号晚上 9 点自动运行，按扩展名分类文件。</p>
-            </div>
-        </div>
-
-        <button>点击切换背景</button>
+<nav class="topbar">
+    <div class="topbar-inner">
+        <a href="home.html">我的小作品</a>
+        <button id="themeBtn">深色</button>
     </div>
+</nav>
 
+<div class="wrap-narrow page-body">
+    <div class="card">
+        <h1 style="font-size: clamp(34px, 5vw, 48px); letter-spacing: -0.03em; margin-bottom: 8px;">你好，世界</h1>
+        <p class="muted" style="margin: 0;">这是我的第一个网页 · 2026年11月</p>
+
+        <div class="intro-list">
+            <div class="intro-item">
+                <div class="icon">🎲</div>
+                <div>
+                    <h2>猜数字游戏</h2>
+                    <p>Python 写的第一个完整程序：随机数、循环、判断、输入容错。</p>
+                </div>
+            </div>
+
+            <div class="intro-item">
+                <div class="icon">🗂️</div>
+                <div>
+                    <h2>下载文件夹整理脚本</h2>
+                    <p>每月 1 号和 16 号晚上 9 点自动运行，按扩展名分类文件。</p>
+                </div>
+            </div>
+
+            <div class="intro-item">
+                <div class="icon">📊</div>
+                <div>
+                    <h2>表格工具</h2>
+                    <p>批量统计 Excel/CSV 结构，按关键词搜索，隐藏工作表单独归类。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-footer">
+            <button id="bgBtn" class="btn-secondary">切换背景</button>
+        </div>
+    </div>
+</div>
+
+<script src="theme.js"></script>
 <script>
-    const btn = document.querySelector("button");
-
-    function updateButton() {
-        btn.textContent = document.body.classList.contains("dark") ? "切换浅色" : "切换深色";
-    }
-
-    btn.addEventListener("click", function () {
-        document.body.classList.toggle("dark");
-        updateButton();
+    // 这个按钮和顶栏的深色按钮做同一件事，保持同步
+    const bgBtn = document.querySelector("#bgBtn");
+    bgBtn.addEventListener("click", function () {
+        document.querySelector("#themeBtn").click();
     });
-
-    updateButton();
 </script>
-
 </body>
 </html>

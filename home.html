@@ -4,134 +4,39 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>我的小作品</title>
-<style>
-    * { box-sizing: border-box; }
-
-    body {
-        margin: 0;
-        min-height: 100vh;
-        padding: 60px 20px;
-        background: linear-gradient(135deg, #fdf6ff 0%, #eef2ff 100%);
-        font-family: -apple-system, "PingFang SC", sans-serif;
-        color: #232129;
-        display: flex;
-        justify-content: center;
-        align-items: flex-start;
-    }
-
-    .wrap { width: min(960px, 100%); }
-
-    .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 32px;
-    }
-
-    h1 {
-        margin: 0;
-        font-size: 40px;
-        background: linear-gradient(90deg, #7b4bc4, #d16ba5);
-        -webkit-background-clip: text;
-        color: transparent;
-    }
-
-    .subtitle { margin: 8px 0 0; color: #6b6875; }
-
-    button {
-        padding: 10px 18px;
-        border: none;
-        border-radius: 999px;
-        background: white;
-        color: #6a3fa8;
-        font-size: 14px;
-        cursor: pointer;
-        box-shadow: 0 4px 16px rgba(80, 60, 120, 0.1);
-    }
-
-    button:hover { background: #f3eef8; }
-
-    .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 20px;
-    }
-
-    .card {
-        display: block;
-        text-decoration: none;
-        background: white;
-        border-radius: 16px;
-        padding: 28px;
-        box-shadow: 0 12px 40px rgba(80, 60, 120, 0.1);
-        transition: transform 0.2s, box-shadow 0.2s;
-        color: inherit;
-    }
-
-    .card:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 20px 50px rgba(80, 60, 120, 0.18);
-    }
-
-    .icon { font-size: 40px; }
-
-    .card h2 {
-        margin: 16px 0 8px;
-        font-size: 20px;
-        color: #6a3fa8;
-    }
-
-    .card p {
-        margin: 0;
-        color: #6b6875;
-        font-size: 14px;
-        line-height: 1.6;
-    }
-
-    .arrow {
-        display: inline-block;
-        margin-top: 16px;
-        color: #7b4bc4;
-        font-weight: bold;
-    }
-
-    body.dark {
-        background: linear-gradient(135deg, #15151c 0%, #2b2440 100%);
-        color: #f2f2f5;
-    }
-
-    body.dark .card { background: #262633; }
-    body.dark button { background: #262633; color: #d9c7f0; }
-    body.dark .subtitle, body.dark .card p { color: #b8b5c4; }
-    body.dark .card h2, body.dark .arrow { color: #c9a8e8; }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="wrap">
-    <div class="header">
-        <div>
-            <h1>我的小作品</h1>
-            <p class="subtitle">从零开始学 vibe coding 的成果 · 2026年11月</p>
-        </div>
-        <button id="themeBtn">切换深色</button>
+
+<nav class="topbar">
+    <div class="topbar-inner">
+        <a href="home.html">我的小作品</a>
+        <button id="themeBtn">深色</button>
     </div>
+</nav>
+
+<div class="wrap">
+    <header class="hero">
+        <h1>我的小作品</h1>
+        <p>从零开始学 vibe coding · 每一步都留在这里</p>
+    </header>
 
     <div class="grid">
-        <a class="card" href="index.html">
+        <a class="feature" href="index.html">
             <div class="icon">🏠</div>
             <h2>项目介绍</h2>
-            <p>一切的开始：我的第一个网页，记录了最初学到的东西。</p>
+            <p>一切的开始——我的第一个网页，记录了最初学到的东西。</p>
             <span class="arrow">打开 →</span>
         </a>
 
-        <a class="card" href="todo.html">
+        <a class="feature" href="todo.html">
             <div class="icon">📋</div>
             <h2>待办清单</h2>
-            <p>能真正使用的工具：添加任务、勾选完成、本地保存。</p>
+            <p>能真正使用的工具：添加任务、勾选完成、本地保存、导出 JSON。</p>
             <span class="arrow">打开 →</span>
         </a>
 
-        <a class="card" href="report.html">
+        <a class="feature" href="report.html">
             <div class="icon">📊</div>
             <h2>整理报告</h2>
             <p>由 Python 自动生成，显示下载文件夹的整理记录。</p>
@@ -140,19 +45,6 @@
     </div>
 </div>
 
-<script>
-    const btn = document.querySelector("#themeBtn");
-
-    function updateButton() {
-        btn.textContent = document.body.classList.contains("dark") ? "切换浅色" : "切换深色";
-    }
-
-    btn.addEventListener("click", function () {
-        document.body.classList.toggle("dark");
-        updateButton();
-    });
-
-    updateButton();
-</script>
+<script src="theme.js"></script>
 </body>
 </html>

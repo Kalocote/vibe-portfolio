@@ -1,0 +1,332 @@
+/* ============================================================
+   Apple 风格设计系统
+   参考 Apple 官网与 iOS：大量留白、系统字体、细腻阴影、
+   毛玻璃、克制的圆角与精准的文字层级。
+   改这里一处，所有引用它的页面一起生效。
+   ============================================================ */
+
+:root {
+    /* 颜色 */
+    --bg: #f5f5f7;                 /* 页面底色：Apple 官网浅灰 */
+    --surface: #ffffff;            /* 卡片白 */
+    --text: #1d1d1f;               /* 主文字：深灰而非纯黑 */
+    --text-2: #6e6e73;             /* 次要文字 */
+    --text-3: #86868b;             /* 辅助文字 */
+    --blue: #0071e3;               /* 强调色：Apple 官网蓝 */
+    --blue-hover: #0077ed;
+    --line: rgba(0, 0, 0, 0.1);    /* 分隔线 */
+    --green: #34c759;              /* iOS 系统色 */
+    --orange: #ff9500;
+    --red: #ff3b30;
+
+    /* 圆角 */
+    --r-card: 22px;
+    --r-control: 12px;
+
+    /* Apple 官网常用的缓动曲线 */
+    --ease: cubic-bezier(0.28, 0.11, 0.32, 1);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+                 "PingFang SC", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;   /* Mac 上文字更细腻 */
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.47;
+}
+
+/* 深色模式：只改变量，所有组件自动跟着变 */
+body.dark {
+    --bg: #000000;
+    --surface: #1c1c1e;
+    --text: #f5f5f7;
+    --text-2: #a1a1a6;
+    --text-3: #8e8e93;
+    --blue: #0a84ff;
+    --blue-hover: #409cff;
+    --line: rgba(255, 255, 255, 0.12);
+}
+
+/* ---------- 顶部毛玻璃导航 ---------- */
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(245, 245, 247, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--line);
+}
+body.dark .topbar { background: rgba(0, 0, 0, 0.72); }
+
+.topbar-inner {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 13px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+.topbar a, .topbar button {
+    color: var(--blue);
+    font-size: 14px;
+    text-decoration: none;
+    background: none;
+    border: none;
+    padding: 4px 0;
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: 0;
+}
+.topbar a:hover, .topbar button:hover {
+    opacity: 0.7;
+    background: none;
+    transform: none;
+}
+
+/* ---------- 内容容器 ---------- */
+.wrap { max-width: 980px; margin: 0 auto; padding: 0 22px; }
+.wrap-narrow { max-width: 680px; margin: 0 auto; padding: 0 22px; }
+.page-body { padding: 56px 0 80px; }
+
+/* ---------- 页面头部 ---------- */
+.hero { padding: 76px 0 44px; text-align: center; }
+.hero h1 {
+    margin: 0 0 16px;
+    font-size: clamp(40px, 7vw, 64px);
+    font-weight: 600;
+    letter-spacing: -0.035em;   /* 大标题字距收紧，Apple 的标志性处理 */
+    line-height: 1.05;
+}
+.hero p {
+    margin: 0;
+    font-size: clamp(18px, 2.5vw, 22px);
+    color: var(--text-2);
+    line-height: 1.5;
+}
+.page-head { padding: 48px 0 28px; }
+.page-head h1 {
+    margin: 0 0 6px;
+    font-size: clamp(32px, 5vw, 48px);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+}
+.page-head p { margin: 0; color: var(--text-2); font-size: 17px; }
+
+/* ---------- 卡片 ---------- */
+.card {
+    background: var(--surface);
+    border-radius: var(--r-card);
+    padding: 36px;
+    /* 一层极淡描边感 + 一层柔和大阴影，比单层厚阴影更精致 */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 40px rgba(0, 0, 0, 0.05);
+}
+body.dark .card {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+.card + .card { margin-top: 20px; }
+
+/* ---------- 按钮 ---------- */
+button, .btn {
+    font-family: inherit;
+    font-size: 15px;
+    cursor: pointer;
+    border: none;
+    border-radius: 999px;        /* 胶囊形 */
+    padding: 12px 22px;
+    background: var(--blue);
+    color: #fff;
+    transition: background 0.2s var(--ease), transform 0.2s var(--ease), opacity 0.2s var(--ease);
+}
+button:hover, .btn:hover { background: var(--blue-hover); }
+button:active, .btn:active { transform: scale(0.97); }  /* 点击微缩放反馈 */
+button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.btn-secondary {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--text);
+}
+.btn-secondary:hover { background: rgba(0, 0, 0, 0.09); }
+body.dark .btn-secondary { background: rgba(255, 255, 255, 0.1); color: var(--text); }
+body.dark .btn-secondary:hover { background: rgba(255, 255, 255, 0.16); }
+
+.btn-small { padding: 8px 15px; font-size: 13px; }
+
+/* ---------- 输入框与下拉 ---------- */
+input, select {
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-control);
+    padding: 12px 16px;
+    transition: box-shadow 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18);  /* iOS 蓝色聚焦圈 */
+}
+body.dark input:focus, body.dark select:focus {
+    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25);
+}
+
+/* ---------- 文字工具 ---------- */
+.muted { color: var(--text-2); }
+.small { font-size: 13px; }
+.hairline { border-top: 1px solid var(--line); }
+
+/* ============================================================
+   首页：卡片网格
+   ============================================================ */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+    padding-bottom: 80px;
+}
+.feature {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: var(--surface);
+    border-radius: var(--r-card);
+    padding: 32px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 40px rgba(0, 0, 0, 0.05);
+    transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease);
+}
+.feature:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 24px 60px rgba(0, 0, 0, 0.1);
+}
+.feature .icon { font-size: 44px; line-height: 1; }
+.feature h2 {
+    margin: 20px 0 8px;
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+.feature p { margin: 0; color: var(--text-2); font-size: 15px; }
+.feature .arrow {
+    display: inline-block;
+    margin-top: 22px;
+    color: var(--blue);
+    font-size: 14px;
+}
+
+/* ============================================================
+   介绍页：列表
+   ============================================================ */
+.intro-list { margin-top: 8px; }
+.intro-item {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    padding: 22px 0;
+    border-top: 1px solid var(--line);
+}
+.intro-item:first-child { border-top: none; }
+.intro-item .icon { font-size: 30px; line-height: 1.2; }
+.intro-item h2 { margin: 0 0 4px; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+.intro-item p { margin: 0; color: var(--text-2); font-size: 15px; }
+.card-footer { margin-top: 28px; }
+
+/* ============================================================
+   待办清单
+   ============================================================ */
+.input-row { display: flex; gap: 10px; }
+.input-row input { flex: 1; min-width: 0; }
+.input-row select { cursor: pointer; }
+
+.filters { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+.filter.active { background: var(--blue); color: #fff; }
+.filter.active:hover { background: var(--blue-hover); }
+
+.task-list { list-style: none; padding: 0; margin: 24px 0 0; }
+.task-list li {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 4px;
+    border-top: 1px solid var(--line);
+}
+.task-list li:first-child { border-top: none; }
+.task-list .text { flex: 1; min-width: 0; font-size: 15px; transition: opacity 0.2s var(--ease); }
+.task-list li.done .text { text-decoration: line-through; opacity: 0.4; }
+
+.priority {
+    padding: 3px 9px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.priority.high   { background: rgba(255, 59, 48, 0.12);  color: var(--red); }
+.priority.medium { background: rgba(255, 149, 0, 0.14);  color: #c47b00; }
+.priority.low    { background: rgba(52, 199, 89, 0.14);  color: #248a3d; }
+body.dark .priority.medium { color: #ffb340; }
+body.dark .priority.low { color: #30d158; }
+
+input[type="checkbox"] {
+    width: 19px; height: 19px;
+    padding: 0;
+    cursor: pointer;
+    accent-color: var(--blue);
+    flex: none;
+}
+.task .delete { flex: none; }
+
+.todo-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+}
+.todo-footer .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.hint { color: var(--text-3); font-size: 13px; margin: 0; }
+
+/* ============================================================
+   报告页 / 搜索结果页：统计标签 + 表格
+   ============================================================ */
+.stats { display: flex; gap: 10px; flex-wrap: wrap; margin: 24px 0 8px; }
+.tag {
+    display: inline-block;
+    padding: 7px 15px;
+    border-radius: 999px;
+    background: rgba(0, 113, 227, 0.1);
+    color: var(--blue);
+    font-size: 13px;
+    font-weight: 500;
+}
+body.dark .tag { background: rgba(10, 132, 255, 0.16); }
+
+.data-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+.data-table th, .data-table td {
+    padding: 13px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+    font-size: 15px;
+}
+.data-table th { color: var(--text-2); font-size: 13px; font-weight: 500; }
+.data-table tr:last-child td { border-bottom: none; }
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 640px) {
+    .hero { padding: 56px 0 32px; }
+    .card { padding: 24px; border-radius: 18px; }
+    .input-row { flex-wrap: wrap; }
+    .input-row input { flex-basis: 100%; }
+    .todo-footer { flex-direction: column; align-items: flex-start; }
+}

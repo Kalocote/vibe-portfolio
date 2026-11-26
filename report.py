@@ -22,39 +22,6 @@ counts = {}
 for name, kind in safe_moves:
     counts[kind] = counts.get(kind, 0) + 1
 
-css = """
-body {
-    margin: 0;
-    padding: 40px;
-    background: #f5f3fa;
-    font-family: -apple-system, "PingFang SC", sans-serif;
-    color: #232129;
-}
-.card {
-    max-width: 900px;
-    margin: 0 auto;
-    background: white;
-    border-radius: 16px;
-    padding: 32px;
-    box-shadow: 0 12px 40px rgba(80, 60, 120, 0.1);
-}
-h1 { margin-top: 0; color: #7b4bc4; }
-.home { display: inline-block; margin-bottom: 16px; color: #7b4bc4; font-size: 14px; text-decoration: none; }
-.home:hover { text-decoration: underline; }
-table { width: 100%; border-collapse: collapse; }
-th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; }
-th { color: #6b6875; font-size: 13px; }
-.tag {
-    display: inline-block;
-    margin: 16px 6px 0 0;
-    padding: 6px 14px;
-    border-radius: 999px;
-    background: #efe8fa;
-    color: #6a3fa8;
-    font-size: 13px;
-}
-"""
-
 rows = ""
 for name, kind in safe_moves:
     rows += f"<tr><td>{escape(name)}</td><td>{escape(kind)}</td></tr>"
@@ -67,20 +34,35 @@ html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>整理报告</title>
-<style>{css}</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="card">
-<a class="home" href="home.html">← 返回首页</a>
-<h1>我的下载文件夹整理记录</h1>
-<p>共整理 {len(safe_moves)} 个文件</p>
-{summary}
-<table>
-<tr><th>文件名</th><th>归档到</th></tr>
-{rows}
-</table>
+
+<nav class="topbar">
+    <div class="topbar-inner">
+        <a href="home.html">我的小作品</a>
+        <button id="themeBtn">深色</button>
+    </div>
+</nav>
+
+<div class="wrap-narrow page-body">
+    <div class="page-head">
+        <h1>整理报告</h1>
+        <p>下载文件夹的自动整理记录</p>
+    </div>
+    <div class="card">
+        <p class="muted" style="margin: 0;">共整理 {len(safe_moves)} 个文件</p>
+        <div class="stats">{summary}</div>
+        <table class="data-table">
+        <tr><th>文件名</th><th>归档到</th></tr>
+        {rows}
+        </table>
+    </div>
 </div>
+
+<script src="theme.js"></script>
 </body>
 </html>
 """
