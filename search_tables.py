@@ -6,53 +6,77 @@ from html import escape
 from openpyxl import load_workbook
 
 CSS = """
+:root {
+    --bg: #f5f5f7;
+    --surface: #ffffff;
+    --text: #1d1d1f;
+    --text-2: #6e6e73;
+    --text-3: #86868b;
+    --blue: #0071e3;
+    --line: rgba(0, 0, 0, 0.1);
+    --ease: cubic-bezier(0.28, 0.11, 0.32, 1);
+}
+* { box-sizing: border-box; }
 body {
     margin: 0;
-    padding: 40px 20px;
-    background: #f5f3fa;
-    font-family: -apple-system, "PingFang SC", sans-serif;
-    color: #232129;
+    padding: 56px 20px 80px;
+    background: var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif;
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.47;
 }
-.wrap { max-width: 1000px; margin: 0 auto; }
-h1 { color: #7b4bc4; margin-top: 0; }
-.info { color: #6b6875; font-size: 14px; margin-bottom: 24px; }
-.hit {
-    background: white;
-    border-radius: 16px;
-    padding: 20px 24px;
-    margin-bottom: 16px;
-    box-shadow: 0 8px 30px rgba(80, 60, 120, 0.08);
+.wrap { max-width: 980px; margin: 0 auto; }
+h1 {
+    margin: 0 0 8px;
+    font-size: clamp(32px, 5vw, 48px);
+    font-weight: 600;
+    letter-spacing: -0.03em;
 }
-.where { color: #8b8798; font-size: 13px; margin: 0 0 12px; }
-.where strong { color: #6a3fa8; font-size: 15px; }
-mark { background: #ffe9a8; color: #5a4200; padding: 1px 3px; border-radius: 3px; }
-table { width: 100%; border-collapse: collapse; }
-th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; }
-th { color: #6b6875; width: 30%; }
-.empty {
-    background: white;
-    border-radius: 16px;
-    padding: 40px;
-    text-align: center;
-    color: #8b8798;
-}
-.jump {
-    display: flex;
-    gap: 12px;
-    margin: 0 0 28px;
-}
+.info { color: var(--text-2); font-size: 15px; margin-bottom: 28px; }
+
+/* 顶部两页切换 */
+.jump { display: flex; gap: 10px; margin: 0 0 28px; flex-wrap: wrap; }
 .jump a {
     padding: 10px 18px;
-    background: white;
-    color: #6a3fa8;
+    background: var(--surface);
+    color: var(--text-2);
     border-radius: 999px;
     font-size: 14px;
     text-decoration: none;
-    box-shadow: 0 4px 20px rgba(80, 60, 120, 0.06);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 6px 20px rgba(0,0,0,0.05);
+    transition: background 0.2s var(--ease), transform 0.2s var(--ease);
 }
-.jump a:hover { background: #efe8fa; }
-.jump a.current { background: #7b4bc4; color: white; }
-.no-match { color: #8b8798; font-size: 14px; padding: 20px 0; }
+.jump a:hover { color: var(--blue); transform: translateY(-1px); }
+.jump a.current { background: var(--blue); color: #fff; }
+
+/* 命中卡片 */
+.hit {
+    background: var(--surface);
+    border-radius: 18px;
+    padding: 22px 26px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 30px rgba(0,0,0,0.05);
+}
+.where { color: var(--text-3); font-size: 13px; margin: 0 0 14px; }
+.where strong { color: var(--blue); font-size: 15px; font-weight: 600; }
+mark { background: rgba(255, 149, 0, 0.28); color: var(--text); padding: 1px 4px; border-radius: 4px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid var(--line); font-size: 15px; }
+th { color: var(--text-2); width: 30%; font-size: 13px; font-weight: 500; }
+tr:last-child th, tr:last-child td { border-bottom: none; }
+
+.empty {
+    background: var(--surface);
+    border-radius: 18px;
+    padding: 56px 24px;
+    text-align: center;
+    color: var(--text-2);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 30px rgba(0,0,0,0.05);
+}
+.no-match { color: var(--text-2); font-size: 15px; padding: 20px 0; }
+
+/* 分页 */
 .pager {
     display: flex;
     justify-content: center;
@@ -66,63 +90,41 @@ th { color: #6b6875; width: 30%; }
     height: 40px;
     padding: 0 12px;
     border: none;
-    border-radius: 10px;
-    background: #efe8fa;
-    color: #6a3fa8;
+    border-radius: 12px;
+    background: rgba(0,0,0,0.05);
+    color: var(--text);
     font-size: 14px;
+    font-family: inherit;
     cursor: pointer;
-    transition: background 0.2s, transform 0.15s;
+    transition: background 0.2s var(--ease), transform 0.2s var(--ease);
 }
-.pager button:hover:not(:disabled):not(.active) {
-    background: #e2d3f3;
-    transform: translateY(-1px);
-}
+.pager button:hover:not(:disabled):not(.active) { background: rgba(0,0,0,0.09); transform: translateY(-1px); }
 .pager button:disabled { opacity: 0.35; cursor: not-allowed; }
-.pager button.active { background: #7b4bc4; color: #fff; }
+.pager button.active { background: var(--blue); color: #fff; }
 .pager .arrow { font-size: 20px; line-height: 1; padding: 0 14px; }
 .page-numbers { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .page-numbers .dots {
-    min-width: 24px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #a99fb8;
-    font-size: 14px;
+    min-width: 24px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-3); font-size: 14px;
 }
 .jump-page {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    margin-top: 16px;
-    color: #8b8798;
-    font-size: 13px;
+    display: flex; justify-content: center; align-items: center; gap: 8px;
+    margin-top: 16px; color: var(--text-2); font-size: 14px;
 }
 .jump-page input {
-    width: 52px;
-    height: 34px;
-    text-align: center;
-    border: 1px solid #ddd5e8;
-    border-radius: 8px;
-    font-size: 14px;
-    color: #6a3fa8;
-    background: white;
+    width: 54px; height: 36px; text-align: center;
+    border: 1px solid var(--line); border-radius: 10px;
+    font-size: 14px; font-family: inherit; color: var(--text); background: var(--surface);
 }
-.jump-page input:focus { outline: 2px solid #c9aee8; outline-offset: 1px; }
+.jump-page input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,113,227,0.18); }
 .jump-page button {
-    height: 34px;
-    padding: 0 16px;
-    border: none;
-    border-radius: 8px;
-    background: #efe8fa;
-    color: #6a3fa8;
-    font-size: 13px;
-    cursor: pointer;
+    height: 36px; padding: 0 16px; border: none; border-radius: 10px;
+    background: rgba(0,0,0,0.05); color: var(--text);
+    font-size: 13px; font-family: inherit; cursor: pointer;
 }
-.jump-page button:hover { background: #e2d3f3; }
+.jump-page button:hover { background: rgba(0,0,0,0.09); }
 """
-
 JS = """
 const PAGE_SIZE = 10;
 
